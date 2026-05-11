@@ -10,7 +10,11 @@ import {
   BarChart3,
   Calendar,
   ChevronRight,
-  Plus
+  Plus,
+  Target,
+  Database,
+  Lock,
+  Gift
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -37,24 +41,11 @@ const data = [
   { name: '05/07', profit: 1100 },
 ]
 
-const stats = [
-  { label: 'Total Balance', value: '$2,450.00', icon: ShieldCheck, trend: '+12.5%', isUp: true },
-  { label: 'Active Platforms', value: '14', icon: Activity, trend: 'Stable', isUp: true },
-  { label: 'Profit Ratio', value: '1:4.2', icon: BarChart3, trend: '+2.1%', isUp: true },
-  { label: 'Daily Streak', value: '7 Days', icon: Zap, trend: 'On Target', isUp: true },
-]
-
-const recentActivity = [
-  { platform: 'Chumba Casino', amount: '+$50.00', type: 'Redemption', status: 'Completed', date: '2h ago' },
-  { platform: 'Fortune Coins', amount: '-$10.00', type: 'Playthrough', status: 'In Progress', date: '5h ago' },
-  { platform: 'Pulsz', amount: '+$120.00', type: 'Daily Drop', status: 'Completed', date: '1d ago' },
-]
-
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 pb-12 h-full">
       {/* Search Protocol Modal */}
       <Modal 
         isOpen={isModalOpen} 
@@ -96,11 +87,10 @@ export default function DashboardPage() {
         </div>
       </Modal>
 
-      {/* Header */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tighter text-white">SITREP: ALPHA</h2>
-          <p className="text-tactical-muted font-mono text-xs uppercase tracking-[0.2em] mt-1">Personnel: Agent Hartman | Location: Sector 7G</p>
+          <h2 className="text-3xl font-bold tracking-tighter text-white uppercase italic">Sitrep: Alpha</h2>
+          <p className="text-tactical-muted font-mono text-xs uppercase tracking-[0.2em] mt-1">Sector 7G // Active Surveillance</p>
         </div>
         <div className="flex gap-4">
           <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
@@ -110,153 +100,162 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            <Card className="hover:border-gold/50 transition-colors">
-              <div className="flex justify-between items-start">
-                <div className="tactical-header">
-                  <stat.icon size={14} />
-                  <span>{stat.label}</span>
+      {/* Bento Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-max">
+        
+        {/* Status Report (Large Analytics Card) */}
+        <Card 
+          className="lg:col-span-2 flex flex-col min-h-[400px] relative overflow-hidden group"
+          title="Field Intelligence Report"
+          icon={<BarChart3 size={14} />}
+          headerAction={
+            <div className="flex gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[10px] text-green-500 uppercase font-mono">Real-time Node Active</span>
+            </div>
+          }
+        >
+          <div className="absolute top-0 right-0 p-8 opacity-5 font-black text-8xl rotate-12 select-none group-hover:rotate-6 transition-transform">INTEL</div>
+          
+          <div className="grid grid-cols-3 gap-4 mt-4">
+             <div className="bg-black/30 p-4 border-b-2 border-gold rounded-sm">
+                <p className="text-[10px] uppercase text-tactical-muted font-bold mb-1">Win/Loss Ratio</p>
+                <p className="text-3xl font-black text-white">2.4<span className="text-xs text-tactical-muted font-normal ml-1">/NODE</span></p>
+             </div>
+             <div className="bg-black/30 p-4 border-b-2 border-green-500 rounded-sm">
+                <p className="text-[10px] uppercase text-tactical-muted font-bold mb-1">Net Extraction</p>
+                <p className="text-3xl font-black text-green-500">+$1,452</p>
+             </div>
+             <div className="bg-black/30 p-4 border-b-2 border-gold rounded-sm">
+                <p className="text-[10px] uppercase text-tactical-muted font-bold mb-1">Extraction Level</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex-1 h-2 bg-tactical-border/50 rounded-full overflow-hidden">
+                    <div className="h-full bg-gold w-[65%]" />
+                  </div>
+                  <span className="text-xs font-mono text-gold">65%</span>
                 </div>
-                <div className={stat.isUp ? "text-green-500 font-mono text-[10px]" : "text-red-500 font-mono text-[10px]"}>
-                  {stat.trend}
-                </div>
+             </div>
+          </div>
+
+          <div className="flex-1 min-h-[200px] mt-6">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data}>
+                <defs>
+                  <linearGradient id="colorProfitDashboard" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#D4AF37" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2D2D2D" vertical={false} />
+                <XAxis dataKey="name" hide />
+                <YAxis hide />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #2D2D2D', fontSize: '10px' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="profit" 
+                  stroke="#D4AF37" 
+                  strokeWidth={3} 
+                  fillOpacity={1} 
+                  fill="url(#colorProfitDashboard)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Priority Objective (Daily Rewards) */}
+        <Card 
+          className="lg:col-span-1 border-gold/50 flex flex-col items-center justify-center text-center py-10 relative bg-gold/[0.03]"
+          title="PRIORITY: SUPPLY DROP"
+          icon={<Gift size={14} />}
+        >
+          <Target className="w-16 h-16 text-gold mb-6 opacity-80" />
+          <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Daily Supply Node</h3>
+          <p className="text-[11px] text-tactical-muted mt-2 mb-8 max-w-[200px] uppercase leading-relaxed tracking-wide">
+            Harvest <span className="text-gold font-bold">1.00 SC</span> from all active frontline outposts
+          </p>
+          <div className="bg-black/60 px-6 py-3 border-2 border-gold/30 rounded font-mono text-2xl text-gold mb-8 shadow-inner">
+            14:22:08
+          </div>
+          <Button className="w-full py-4 text-sm group" onClick={() => window.location.href = '/rewards'}>
+            Initialize Extraction <ChevronRight size={16} className="inline ml-1 group-hover:translate-x-1 transition-transform" />
+          </Button>
+        </Card>
+
+        {/* Account Vault (List View) */}
+        <Card 
+          className="lg:col-span-1 flex flex-col min-h-[350px]"
+          title="Account Vault"
+          icon={<Lock size={14} />}
+          headerAction={<Button variant="ghost" size="sm" onClick={() => window.location.href = '/vault'}>Expand</Button>}
+        >
+          <div className="space-y-3 mt-2 flex-1">
+            {[
+              { name: 'STAKE.US', user: 'EAGLE_EYE_01', color: 'border-gold' },
+              { name: 'WOW VEGAS', user: 'PATRIOT_GEM', color: 'border-gold/50' },
+              { name: 'PULSZ', user: 'COMMANDER_X', color: 'border-gold/50' },
+              { name: 'CHUMBA', user: 'AGENT_H', color: 'border-gold' },
+            ].map((acc, i) => (
+              <div key={i} className={cn("p-3 bg-black/20 rounded border-l-2 hover:bg-gold/5 transition-all cursor-pointer group", acc.color)}>
+                 <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-[11px] font-black text-white tracking-widest">{acc.name}</p>
+                      <p className="text-[9px] text-tactical-muted font-mono italic mt-0.5">ID: {acc.user}</p>
+                    </div>
+                    <Lock size={12} className="text-tactical-muted group-hover:text-gold" />
+                 </div>
               </div>
-              <div className="tactical-value text-2xl mt-2">{stat.value}</div>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+            ))}
+          </div>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Performance Chart */}
-        <div className="lg:col-span-2">
-          <Card title="Performance Analytics" icon={<BarChart3 size={14} />}>
-            <div className="h-[300px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data}>
-                  <defs>
-                    <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#D4AF37" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2C2C2C" vertical={false} />
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="#888888" 
-                    fontSize={10} 
-                    tickLine={false} 
-                    axisLine={false} 
-                  />
-                  <YAxis 
-                    stroke="#888888" 
-                    fontSize={10} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickFormatter={(value) => `$${value}`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#141414', 
-                      border: '1px solid #2C2C2C', 
-                      borderRadius: '4px',
-                      fontFamily: 'monospace'
-                    }}
-                    itemStyle={{ color: '#D4AF37' }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="profit" 
-                    stroke="#D4AF37" 
-                    strokeWidth={2}
-                    fillOpacity={1} 
-                    fill="url(#colorProfit)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </div>
-
-        {/* Recent Activity */}
-        <div>
-          <Card title="Recent Field Logs" icon={<Calendar size={14} />}>
-            <div className="space-y-4 mt-2">
-              {recentActivity.map((log, i) => (
-                <div key={i} className="flex items-center justify-between p-3 border-b border-tactical-border last:border-0 hover:bg-white/5 transition-colors cursor-pointer group">
-                  <div>
-                    <div className="font-mono text-xs text-white uppercase tracking-wider">{log.platform}</div>
-                    <div className="text-[10px] text-tactical-muted uppercase font-mono mt-0.5">{log.type} // {log.date}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className={cn("tactical-value text-xs", log.amount.startsWith('+') ? "text-green-500" : "text-red-500")}>
-                      {log.amount}
-                    </div>
-                    <div className="text-[8px] text-tactical-muted uppercase font-mono">{log.status}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button variant="ghost" className="w-full mt-4 text-[10px]">View Full Dossier</Button>
-          </Card>
-        </div>
-      </div>
-
-      {/* Directory Quick View */}
-      <Card title="Operational Status Report" icon={<Activity size={14} />}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-tactical-border">
-                <th className="pb-4 font-mono text-[10px] uppercase text-tactical-muted tracking-widest">Platform</th>
-                <th className="pb-4 font-mono text-[10px] uppercase text-tactical-muted tracking-widest">Login Efficiency</th>
-                <th className="pb-4 font-mono text-[10px] uppercase text-tactical-muted tracking-widest">Redeemable</th>
-                <th className="pb-4 font-mono text-[10px] uppercase text-tactical-muted tracking-widest">Progress</th>
-                <th className="pb-4 font-mono text-[10px] uppercase text-tactical-muted tracking-widest text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-tactical-border/30">
-              {[
-                { name: 'Luckyland Slots', streak: '98%', redeem: '$45.00', progress: 75 },
-                { name: 'Stake.us', streak: '100%', redeem: '$120.50', progress: 100 },
-                { name: 'WOW Vegas', streak: '85%', redeem: '$12.00', progress: 20 },
-              ].map((row, i) => (
-                <tr key={i} className="group hover:bg-gold/5 transition-colors">
-                  <td className="py-4 font-mono text-xs text-white">{row.name}</td>
-                  <td className="py-4">
-                    <div className="flex items-center gap-2">
-                       <div className="w-24 h-1 bg-tactical-border rounded-full overflow-hidden">
-                        <div className="h-full bg-gold" style={{ width: row.streak }} />
-                      </div>
-                      <span className="font-mono text-[10px] text-tactical-muted">{row.streak}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 tactical-value text-xs">{row.redeem}</td>
-                  <td className="py-4">
-                     <div className="flex items-center gap-2">
-                       <div className="w-24 h-1 bg-tactical-border rounded-full overflow-hidden">
-                        <div className={cn("h-full", row.progress === 100 ? "bg-green-500" : "bg-blue-500")} style={{ width: `${row.progress}%` }} />
-                      </div>
-                      <span className="font-mono text-[10px] text-tactical-muted">{row.progress}%</span>
-                    </div>
-                  </td>
-                  <td className="py-4 text-right">
-                    <Button variant="ghost" size="sm" className="p-2 h-auto"><ChevronRight size={14} /></Button>
-                  </td>
+        {/* Active Operations (Table View) */}
+        <Card 
+          className="lg:col-span-2"
+          title="Active Field Operations"
+          icon={<Database size={14} />}
+        >
+          <div className="overflow-x-auto mt-2">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[10px] uppercase text-gold font-bold border-b border-tactical-border/50">
+                  <th className="pb-3">Outpost</th>
+                  <th className="pb-3 px-4">Intel (SC)</th>
+                  <th className="pb-3">Objective</th>
+                  <th className="pb-3 text-right">Protocol</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody className="text-[11px]">
+                {[
+                  { name: 'Stake.us', bal: '45.22', progress: '12% LEFT', status: 'DEPLOY', ready: false },
+                  { name: 'Chumba Casino', bal: '108.00', progress: 'SECURED', status: 'REDEEM', ready: true },
+                  { name: 'McLuck', bal: '14.50', progress: '85% LEFT', status: 'DEPLOY', ready: false },
+                  { name: 'LuckyLand', bal: '32.10', progress: 'READY', status: 'REDEEM', ready: true },
+                ].map((op, i) => (
+                  <tr key={i} className="border-b border-tactical-border/30 hover:bg-white/[0.02] group">
+                    <td className="py-3 font-bold text-white">{op.name}</td>
+                    <td className="py-3 px-4 font-mono text-gold">{op.bal}</td>
+                    <td className="py-3 font-mono">
+                      <span className={op.ready ? "text-green-500" : "text-red-500"}>{op.progress}</span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <button className={cn(
+                        "px-3 py-1 rounded text-[9px] font-bold uppercase tracking-widest border transition-all",
+                        op.ready ? "bg-gold text-black border-gold" : "text-gold border-gold/50 hover:bg-gold/10"
+                      )}>
+                        {op.status}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+      </div>
     </div>
   )
 }

@@ -3,9 +3,9 @@
 @theme {
   --color-gold: #D4AF37;
   --color-gold-hover: #F1C40F;
-  --color-tactical-bg: #0A0A0A;
-  --color-tactical-card: #141414;
-  --color-tactical-border: #2C2C2C;
+  --color-tactical-bg: #050505;
+  --color-tactical-card: #1A1A1A;
+  --color-tactical-border: #2D2D2D;
   --color-tactical-text: #E5E5E5;
   --color-tactical-muted: #888888;
 }
@@ -18,25 +18,25 @@
 
 @layer components {
   .tactical-grid {
-    @apply border border-tactical-border bg-tactical-card;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    @apply border-2 border-tactical-border bg-tactical-card rounded-xl overflow-hidden;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.4);
   }
 
   .tactical-header {
-    @apply font-mono uppercase tracking-widest text-[11px] text-tactical-muted mb-2 flex items-center gap-2;
+    @apply font-mono uppercase tracking-[0.2em] text-[10px] text-gold font-bold mb-4 flex items-center gap-2;
   }
 
   .tactical-value {
-    @apply font-mono text-gold font-bold tracking-tight;
+    @apply font-mono text-gold font-black tracking-tighter;
   }
 
   .top-secret-border {
-    @apply border-2 border-double border-tactical-border p-4 relative overflow-hidden;
+    @apply border-2 border-tactical-border p-4 relative overflow-hidden rounded-lg;
   }
 
   .top-secret-border::before {
     content: "STRICTLY CONFIDENTIAL";
-    @apply absolute top-1 right-1 text-[8px] font-mono text-tactical-muted opacity-30 transform rotate-45;
+    @apply absolute top-1 right-1 text-[8px] font-mono text-tactical-muted opacity-20 transform rotate-45 pointer-events-none;
   }
 }
 
@@ -46,5 +46,5 @@
 }
 
 .animate-eagle-hover:hover {
-  @apply scale-[1.02] border-gold;
+  @apply scale-[1.01] border-gold/50 shadow-[0_0_20px_rgba(212,175,55,0.1)];
 }

@@ -10,20 +10,17 @@ import {
   Database, 
   ChevronRight,
   LogOut,
-  Target
+  Target,
+  Settings,
+  Shield
 } from 'lucide-react'
 import { motion } from 'motion/react'
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+import { cn } from '@/lib/utils'
 
 const navItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Account Vault', href: '/vault', icon: Lock },
-  { name: 'Daily Rewards', href: '/rewards', icon: Gift },
+  { name: 'Vault', href: '/vault', icon: Lock },
+  { name: 'Rewards', href: '/rewards', icon: Gift },
   { name: 'Directory', href: '/directory', icon: Database },
 ]
 
@@ -31,64 +28,46 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="w-64 h-screen bg-tactical-card border-r border-tactical-border flex flex-col pt-8">
-      {/* Brand */}
-      <div className="px-6 mb-12 flex items-center gap-3">
-        <div className="w-10 h-10 bg-gold grid place-items-center rounded-sm rotate-45">
-          <Target className="text-black -rotate-45" size={24} />
-        </div>
-        <div>
-          <h1 className="font-mono text-lg font-bold tracking-tighter text-white leading-none">ARMED EAGLE</h1>
-          <p className="text-[10px] font-mono text-gold opacity-80 mt-1 uppercase tracking-widest">Operation: Sweep</p>
-        </div>
-      </div>
+    <nav className="w-20 border-r-2 border-tactical-border bg-tactical-card flex flex-col items-center py-8 gap-8 shrink-0 z-40">
+      {navItems.map((item) => {
+        const isActive = pathname === item.href
+        return (
+          <Link 
+            key={item.name} 
+            href={item.href}
+            title={item.name}
+            className={cn(
+              "p-3 transition-all duration-300 relative group rounded-sm",
+              isActive 
+                ? "bg-gold text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]" 
+                : "text-tactical-muted hover:text-gold hover:bg-tactical-border/30"
+            )}
+          >
+            <item.icon size={24} className={cn(isActive ? "stroke-[3px]" : "stroke-[1.5px]")} />
+            
+            {/* Tooltip */}
+            <div className="absolute left-full ml-4 px-3 py-1 bg-tactical-card border border-gold text-gold text-[10px] font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+              {item.name}
+            </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 space-y-2">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link 
-              key={item.name} 
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-sm transition-all duration-200 group relative overflow-hidden",
-                isActive 
-                  ? "bg-gold/10 text-gold border-r-4 border-gold" 
-                  : "text-tactical-muted hover:text-white hover:bg-tactical-border/50"
-              )}
-            >
-              <item.icon size={18} className={cn(isActive ? "text-gold" : "text-tactical-muted group-hover:text-white")} />
-              <span className="font-mono text-xs uppercase tracking-wider">{item.name}</span>
-              {isActive && (
-                <motion.div 
-                  layoutId="active-indicator"
-                  className="absolute left-0 w-1 h-full bg-gold"
-                />
-              )}
-            </Link>
-          )
-        })}
-      </nav>
+            {isActive && (
+              <motion.div 
+                layoutId="sidebar-active"
+                className="absolute -left-4 w-1 h-8 bg-gold rounded-r-full"
+              />
+            )}
+          </Link>
+        )
+      })}
 
-      {/* Military Grade Indicator */}
-      <div className="p-6 border-t border-tactical-border">
-        <div className="top-secret-border bg-black/40">
-          <div className="tactical-header">
-            <span className="w-2 h-2 bg-green-500 animate-pulse rounded-full" />
-            Security Level: 04
-          </div>
-          <p className="text-[10px] font-mono text-tactical-muted leading-relaxed">
-            SYSTEM STATUS: ENCRYPTED. 
-            AUTH TOKEN ACTIVE.
-          </p>
-        </div>
-
-        <button className="flex items-center gap-2 mt-8 text-tactical-muted hover:text-red-500 transition-colors px-4 py-2 w-full font-mono text-[10px] uppercase tracking-widest">
-          <LogOut size={14} />
-          Terminate Connection
+      <div className="mt-auto flex flex-col gap-6">
+        <button className="p-3 text-tactical-muted hover:text-gold transition-colors">
+          <Settings size={20} />
+        </button>
+        <button className="p-3 text-tactical-muted hover:text-red-500 transition-colors">
+          <LogOut size={20} />
         </button>
       </div>
-    </div>
+    </nav>
   )
 }
