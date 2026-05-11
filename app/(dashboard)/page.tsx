@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState } from 'react'
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
-  ShieldCheck, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  ShieldCheck,
   Zap,
   BarChart3,
   Calendar,
@@ -19,17 +19,18 @@ import {
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
 } from 'recharts'
 import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/lib/auth-context'
 
 const data = [
   { name: '05/01', profit: 450 },
@@ -43,6 +44,7 @@ const data = [
 
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { user } = useAuth()
 
   return (
     <div className="space-y-6 pb-12 h-full">
@@ -90,7 +92,9 @@ export default function DashboardPage() {
       <div className="flex items-end justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tighter text-white uppercase italic">Sitrep: Alpha</h2>
-          <p className="text-tactical-muted font-mono text-xs uppercase tracking-[0.2em] mt-1">Sector 7G // Active Surveillance</p>
+          <p className="text-tactical-muted font-mono text-xs uppercase tracking-[0.2em] mt-1">
+            Agent: {user?.email || 'UNKNOWN'} // Active Surveillance
+          </p>
         </div>
         <div className="flex gap-4">
           <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">

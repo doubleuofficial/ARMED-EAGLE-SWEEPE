@@ -22,6 +22,7 @@ const navItems = [
   { name: 'Vault', href: '/vault', icon: Lock },
   { name: 'Rewards', href: '/rewards', icon: Gift },
   { name: 'Directory', href: '/directory', icon: Database },
+  { name: 'Security', href: '/security', icon: Shield },
 ]
 
 export function Sidebar() {

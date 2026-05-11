@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/lib/auth-context';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,7 +26,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
       <body suppressHydrationWarning className="bg-tactical-bg text-tactical-text font-sans">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
