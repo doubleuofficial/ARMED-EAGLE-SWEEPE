@@ -39,6 +39,7 @@ export default function DashboardLayout({
                  alt="Agent" 
                  fill
                  className="p-1"
+                 referrerPolicy="no-referrer"
                />
             </div>
           </div>
