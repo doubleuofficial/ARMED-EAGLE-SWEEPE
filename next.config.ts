@@ -3,16 +3,14 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   
-  // Standalone is best for Vercel and production stability
+  // Best practice for Vercel and standalone deployments
   output: 'standalone',
 
   eslint: {
-    // Prevents build failure on Vercel/Local for minor linting issues
     ignoreDuringBuilds: true,
   },
 
   typescript: {
-    // Ensures deployment doesn't fail due to strict type checks
     ignoreBuildErrors: true,
   },
 
@@ -21,48 +19,42 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'picsum.photos',
-        port: '',
         pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'api.dicebear.com',
-        port: '',
         pathname: '/**',
       },
     ],
   },
 
-  // Optimized for Framer Motion and UI performance
+  // Transpile Framer Motion for better SSR performance
   transpilePackages: ['motion'],
 
+  experimental: {
+    // Optimization: Fixes 'Big Strings' warnings by tree-shaking these heavy libraries
+    optimizePackageImports: [
+      'lucide-react', 
+      'recharts', 
+      'motion', 
+      '@otplib/core'
+    ],
+  },
+
   webpack: (config, { dev }) => {
-    // TERMUX FIX: 
-    // This block only runs during 'npm run dev' to stop the EACCES errors.
-    // It will be ignored by Vercel during the production build.
+    // Termux/Local Dev Fix: Stops EACCES errors on Android
     if (dev) {
       config.watchOptions = {
-        // Polling is required for the Android/Termux file system to detect changes
         poll: 1000,
-        // STRICTLY IGNORE root directories to prevent permission denial spam
         ignored: [
           '**/node_modules/**',
           '**/.next/**',
-          '**/.git/**',
-          '/data/data/**', // Specific fix for Termux /data/data/ access
-          '/data/**',      // Broad fix for system data access
-          '/'              // Prevents scanning the root of the device
+          '/data/**',
+          '/'
         ],
       };
     }
-
-    // Support for environments that explicitly disable HMR
-    if (dev && process.env.DISABLE_HMR === 'true') {
-      config.watchOptions = {
-        ignored: /.*/,
-      };
-    }
-
     return config;
   },
 };
