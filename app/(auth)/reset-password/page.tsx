@@ -1,175 +1,154 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Target, Shield, Mail, AlertTriangle, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { motion } from 'motion/react'
+import { createBrowserClient } from '@supabase/ssr'
+import { KeyRound, ShieldAlert, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { useAuth } from '@/lib/auth-context'
-import { useRouter } from 'next/navigation'
 
 export default function ResetPasswordPage() {
-  const [email, setEmail] = useState('')
+  // Initialize Supabase Client
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const { resetPassword } = useAuth()
-  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
+    
+    if (password !== confirmPassword) {
+      setError('Credentials do not match. Verification failed.')
+      return
+    }
+
+    if (password.length < 6) {
+      setError('Security protocol requires at least 6 characters.')
+      return
+    }
+
+    setLoading(true)
 
     try {
-      const { error } = await resetPassword(email)
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password
+      })
 
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess(true)
-      }
-    } catch (err) {
-      setError('An unexpected error occurred')
+      if (updateError) throw updateError
+
+      setSuccess(true)
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 3000)
+    } catch (err: any) {
+      setError(err.message || 'Failed to update credentials.')
     } finally {
       setLoading(false)
     }
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-tactical-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        {/* Background Ambience */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.05]"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-        />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 blur-[120px] rounded-full pointer-events-none" />
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md z-10"
-        >
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-gold grid place-items-center rounded-sm rotate-45 mb-6 shadow-[0_0_30px_rgba(212,175,55,0.3)]">
-              <Target className="text-black -rotate-45" size={32} />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tighter text-white uppercase italic">Armed Eagle</h1>
-            <p className="text-tactical-muted font-mono text-[10px] uppercase tracking-[0.3em] mt-2">Strategic Intelligence Interface</p>
+  return (
+    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        {/* Tactical Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-cyan-500/10 border border-cyan-500/20 mb-4 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+            <KeyRound className="text-cyan-500" size={28} />
           </div>
+          <h1 className="text-2xl font-black tracking-tighter text-white uppercase italic">
+            Credential Recovery
+          </h1>
+          <p className="text-zinc-500 font-mono text-[10px] uppercase tracking-[0.3em] mt-2">
+            Establish New Security Protocol
+          </p>
+        </div>
 
-          <div className="top-secret-border bg-tactical-card p-8 text-center">
-            <div className="tactical-header mb-6">
-              <Mail size={14} className="text-gold" />
-              Reset Code Sent
-            </div>
+        <div className="bg-black border border-zinc-800 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+          {/* Subtle Accent Line */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-blue-600" />
 
-            <div className="mb-6">
-              <p className="text-tactical-muted text-sm mb-4">
-                A secure reset link has been dispatched to your email address.
-                Check your inbox and follow the instructions to establish a new access code.
+          {!success ? (
+            <form onSubmit={handleUpdatePassword} className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest ml-1">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    className="w-full bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl text-white placeholder:text-zinc-700 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest ml-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    className="w-full bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl text-white placeholder:text-zinc-700 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-red-500/5 border border-red-500/20 text-red-500 text-xs font-mono italic">
+                  <ShieldAlert size={16} className="shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  'Authorize Update'
+                )}
+              </button>
+            </form>
+          ) : (
+            <div className="py-8 text-center space-y-4 animate-in fade-in zoom-in duration-300">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/10 border border-green-500/20 mb-2">
+                <CheckCircle2 className="text-green-500" size={40} />
+              </div>
+              <h2 className="text-white font-bold text-lg uppercase tracking-tight">Protocol Updated</h2>
+              <p className="text-zinc-500 text-sm font-mono">
+                Your new credentials have been established. Redirecting to login...
               </p>
-              <p className="text-tactical-muted text-xs">
-                If you don't see the message, check your spam folder.
-              </p>
             </div>
+          )}
+        </div>
 
-            <Link href="/login">
-              <Button className="w-full flex items-center justify-center gap-2">
-                <ArrowLeft size={16} />
-                Return to Login
-              </Button>
+        {/* Back to Login Link */}
+        {!success && (
+          <div className="mt-8 text-center">
+            <Link 
+              href="/login" 
+              className="text-zinc-600 hover:text-zinc-400 text-[10px] font-mono uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-colors"
+            >
+              <ArrowLeft size={12} /> Return to Login
             </Link>
           </div>
-        </motion.div>
+        )}
       </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-tactical-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Ambience */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.05]"
-        style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-      />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* Reset Box */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md z-10"
-      >
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gold grid place-items-center rounded-sm rotate-45 mb-6 shadow-[0_0_30px_rgba(212,175,55,0.3)]">
-            <Target className="text-black -rotate-45" size={32} />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tighter text-white uppercase italic">Armed Eagle</h1>
-          <p className="text-tactical-muted font-mono text-[10px] uppercase tracking-[0.3em] mt-2">Strategic Intelligence Interface</p>
-        </div>
-
-        <div className="top-secret-border bg-tactical-card p-8">
-          <div className="tactical-header mb-6">
-            <Shield size={14} className="text-gold" />
-            Access Code Reset
-          </div>
-
-          <p className="text-tactical-muted text-sm mb-6">
-            Enter your agent email address. A secure reset link will be dispatched to re-establish your access credentials.
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="font-mono text-[10px] uppercase text-tactical-muted tracking-widest pl-1">Agent Email</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 border-b-2 border-tactical-border py-3 px-4 font-mono text-sm text-white focus:outline-none focus:border-gold transition-colors"
-                  placeholder="ENTER EMAIL..."
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-sm">
-                <p className="text-red-400 text-xs font-mono">{error}</p>
-              </div>
-            )}
-
-            <div className="pt-4">
-              <Button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 h-12">
-                {loading ? (
-                  <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Mail size={16} />
-                    Send Reset Code
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-tactical-border/50 flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-[10px] font-mono text-tactical-muted italic leading-tight">
-              <AlertTriangle className="text-yellow-500 shrink-0" size={14} />
-              <span>Reset requests are logged for security purposes.</span>
-            </div>
-            <div className="flex justify-center text-[10px] font-mono uppercase tracking-widest">
-              <Link href="/login" className="hover:text-gold transition-colors">
-                Back to Login
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <p className="text-[9px] font-mono text-tactical-muted uppercase tracking-[0.2em]">Secure Session // AES-256 Multi-Layer Encryption</p>
-        </div>
-      </motion.div>
     </div>
   )
 }
