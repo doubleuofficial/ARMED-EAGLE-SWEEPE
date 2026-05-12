@@ -1,279 +1,250 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Modal } from '@/components/ui/modal'
-import { Button } from '@/components/ui/button'
-import { Shield, Smartphone, Key, CheckCircle, AlertTriangle } from 'lucide-react'
-import { useAuth } from '@/lib/auth-context'
-import { createClient } from '@/lib/supabase/client'
-import { authenticator } from '@otplib/preset-default'
+// Use * as otplib to prevent "authenticator not exported" errors in Next.js 15
+import * as otplib from 'otplib'
+import QRCode from 'qrcode'
+import { 
+  ShieldCheck, 
+  Copy, 
+  CheckCircle2, 
+  AlertCircle, 
+  Loader2, 
+  Smartphone 
+} from 'lucide-react'
+import { createBrowserClient } from '@supabase/ssr'
+
+// Destructure from the namespace
+const { authenticator } = otplib
 
 interface MFASetupModalProps {
   isOpen: boolean
   onClose: () => void
+  userEmail: string
   onSuccess: () => void
 }
 
-type MFAType = 'totp' | 'sms'
+/**
+ * Using a Named Export here to match your import: 
+ * import { MFASetupModal } from '...'
+ */
+export function MFASetupModal({ isOpen, onClose, userEmail, onSuccess }: MFASetupModalProps) {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
-export function MFASetupModal({ isOpen, onClose, onSuccess }: MFASetupModalProps) {
-  const [step, setStep] = useState<'select' | 'setup' | 'verify'>('select')
-  const [mfaType, setMfaType] = useState<MFAType | null>(null)
+  const [step, setStep] = useState(1)
   const [secret, setSecret] = useState('')
   const [qrCodeUrl, setQrCodeUrl] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { user } = useAuth()
-  const supabase = createClient()
+  const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (step === 'setup' && mfaType === 'totp' && !secret) {
-      generateTOTPSecret()
+    if (isOpen && step === 1) {
+      generateSetupData()
     }
-  }, [step, mfaType])
+  }, [isOpen])
 
-  const generateTOTPSecret = async () => {
-    const newSecret = authenticator.generateSecret()
-    setSecret(newSecret)
+  const generateSetupData = async () => {
+    try {
+      const newSecret = authenticator.generateSecret()
+      setSecret(newSecret)
 
-    // Generate QR code URL
-    const otpauth = authenticator.keyuri(
-      user?.email || 'user',
-      'Armed Eagle Vault',
-      newSecret
-    )
-    setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauth)}`)
+      const otpauth = authenticator.keyuri(
+        userEmail,
+        'Armed Eagle Vault',
+        newSecret
+      )
+
+      const url = await QRCode.toDataURL(otpauth, {
+        width: 250,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff',
+        },
+      })
+      setQrCodeUrl(url)
+    } catch (err) {
+      setError('Failed to initialize MFA setup.')
+    }
   }
 
-  const handleSelectType = (type: MFAType) => {
-    setMfaType(type)
-    setStep('setup')
-  }
-
-  const handleVerifyTOTP = async () => {
-    if (!secret || !verificationCode) return
-
+  const handleVerifyAndEnable = async () => {
     setLoading(true)
     setError('')
 
     try {
-      const isValid = authenticator.verify({
-        token: verificationCode,
-        secret: secret
+      // Validate the code
+      const isValid = authenticator.verify({ 
+        token: verificationCode, 
+        secret: secret 
       })
 
       if (!isValid) {
-        setError('Invalid verification code')
+        setError('Invalid code. Please try again.')
+        setLoading(false)
         return
       }
 
-      // Save MFA settings to database
-      const { error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Session not found.')
+
+      const { error: dbError } = await supabase
         .from('user_mfa')
         .upsert({
-          user_id: user?.id,
+          user_id: user.id,
           mfa_type: 'totp',
           totp_secret: secret,
           enabled: true,
-          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
 
-      if (error) throw error
+      if (dbError) throw dbError
 
-      onSuccess()
-      onClose()
-      resetModal()
-    } catch (err) {
-      console.error('Error setting up MFA:', err)
-      setError('Failed to setup MFA')
+      setStep(3)
+      setTimeout(() => {
+        onSuccess()
+        onClose()
+      }, 2000)
+    } catch (err: any) {
+      setError(err.message || 'Verification failed.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSetupSMS = async () => {
-    if (!phoneNumber) return
-
-    setLoading(true)
-    setError('')
-
-    try {
-      // In a real implementation, you'd send an SMS with a verification code
-      // For now, we'll just save the phone number
-      const { error } = await supabase
-        .from('user_mfa')
-        .upsert({
-          user_id: user?.id,
-          mfa_type: 'sms',
-          phone_number: phoneNumber,
-          enabled: true,
-          created_at: new Date().toISOString(),
-        })
-
-      if (error) throw error
-
-      onSuccess()
-      onClose()
-      resetModal()
-    } catch (err) {
-      console.error('Error setting up SMS MFA:', err)
-      setError('Failed to setup SMS MFA')
-    } finally {
-      setLoading(false)
-    }
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(secret)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
-  const resetModal = () => {
-    setStep('select')
-    setMfaType(null)
-    setSecret('')
-    setQrCodeUrl('')
-    setVerificationCode('')
-    setPhoneNumber('')
-    setError('')
-  }
-
-  const handleClose = () => {
-    resetModal()
-    onClose()
-  }
+  if (!isOpen) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="MULTI-FACTOR AUTHENTICATION SETUP">
-      <div className="space-y-6">
-        {step === 'select' && (
-          <div className="space-y-4">
-            <p className="text-tactical-muted text-sm font-mono">
-              Choose your preferred multi-factor authentication method:
-            </p>
-
-            <div className="grid grid-cols-1 gap-4">
-              <button
-                onClick={() => handleSelectType('totp')}
-                className="p-4 border border-tactical-border rounded-sm hover:border-gold transition-colors text-left group"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <Key className="text-gold group-hover:animate-pulse" size={20} />
-                  <span className="font-mono text-sm font-bold text-white">Authenticator App (TOTP)</span>
-                </div>
-                <p className="text-tactical-muted text-xs font-mono">
-                  Use Google Authenticator, Authy, or similar apps for time-based one-time passwords.
-                </p>
-              </button>
-
-              <button
-                onClick={() => handleSelectType('sms')}
-                className="p-4 border border-tactical-border rounded-sm hover:border-gold transition-colors text-left group"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <Smartphone className="text-gold group-hover:animate-pulse" size={20} />
-                  <span className="font-mono text-sm font-bold text-white">SMS Verification</span>
-                </div>
-                <p className="text-tactical-muted text-xs font-mono">
-                  Receive verification codes via SMS to your mobile device.
-                </p>
-              </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+        
+        <div className="border-b border-zinc-100 dark:border-zinc-900 p-6 bg-zinc-50/50 dark:bg-zinc-900/30">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-cyan-500/10 p-2 border border-cyan-500/20">
+              <ShieldCheck className="h-6 w-6 text-cyan-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Vault Security</h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Setup Authenticator</p>
             </div>
           </div>
-        )}
+        </div>
 
-        {step === 'setup' && mfaType === 'totp' && (
-          <div className="space-y-4">
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-white mb-2">Setup Authenticator App</h3>
-              <p className="text-tactical-muted text-sm font-mono mb-4">
-                Scan the QR code with your authenticator app
-              </p>
-            </div>
-
-            {qrCodeUrl && (
-              <div className="flex justify-center">
-                <img src={qrCodeUrl} alt="QR Code" className="border border-tactical-border rounded-sm" />
+        <div className="p-6">
+          {step === 1 && (
+            <div className="space-y-6">
+              <div className="text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
+                <p>1. Open your authenticator app.</p>
+                <p>2. Scan the QR code or enter the key manually.</p>
               </div>
-            )}
 
-            <div className="bg-black/30 p-3 border border-tactical-border rounded-sm">
-              <p className="text-tactical-muted text-xs font-mono mb-1">Manual Entry Code:</p>
-              <p className="text-gold font-mono text-sm font-bold break-all">{secret}</p>
+              <div className="flex justify-center bg-white p-4 rounded-xl border border-zinc-100 shadow-inner">
+                {qrCodeUrl ? (
+                  <img src={qrCodeUrl} alt="MFA QR Code" className="h-48 w-48" />
+                ) : (
+                  <div className="flex h-48 w-48 items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-zinc-300" />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Secret Key</label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded-lg bg-zinc-100 p-3 text-xs font-mono dark:bg-zinc-900 dark:text-cyan-400 border border-zinc-200 dark:border-zinc-800">
+                    {secret}
+                  </code>
+                  <button 
+                    onClick={copyToClipboard}
+                    className="rounded-lg border border-zinc-200 p-3 hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                  >
+                    {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setStep(2)}
+                className="w-full rounded-xl bg-zinc-900 py-3.5 font-bold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+              >
+                Enter Code
+              </button>
             </div>
+          )}
 
-            <div className="space-y-2">
-              <label className="font-mono text-xs uppercase text-tactical-muted tracking-widest">
-                Enter verification code from app:
-              </label>
+          {step === 2 && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                <Smartphone className="h-4 w-4" />
+                <span>Enter 6-digit code</span>
+              </div>
+
               <input
                 type="text"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                className="w-full bg-black/40 border-b-2 border-tactical-border py-3 px-4 font-mono text-sm text-white focus:outline-none focus:border-gold transition-colors"
                 placeholder="000000"
                 maxLength={6}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                className="w-full rounded-xl border-2 border-zinc-200 bg-zinc-50 p-4 text-center text-3xl font-bold tracking-[0.5em] focus:border-cyan-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
               />
-            </div>
 
-            <div className="flex justify-end gap-4">
-              <Button variant="ghost" onClick={() => setStep('select')} size="sm">
-                Back
-              </Button>
-              <Button onClick={handleVerifyTOTP} disabled={loading || verificationCode.length !== 6} size="sm">
-                {loading ? 'Verifying...' : 'Verify & Enable'}
-              </Button>
-            </div>
-          </div>
-        )}
+              {error && (
+                <div className="flex items-center gap-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-500 border border-red-500/20">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-        {step === 'setup' && mfaType === 'sms' && (
-          <div className="space-y-4">
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-white mb-2">Setup SMS Verification</h3>
-              <p className="text-tactical-muted text-sm font-mono mb-4">
-                Enter your phone number to receive verification codes
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="font-mono text-xs uppercase text-tactical-muted tracking-widest">
-                Phone Number:
-              </label>
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full bg-black/40 border-b-2 border-tactical-border py-3 px-4 font-mono text-sm text-white focus:outline-none focus:border-gold transition-colors"
-                placeholder="+1 (555) 123-4567"
-              />
-            </div>
-
-            <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="text-yellow-500" size={14} />
-                <span className="text-yellow-400 text-xs font-mono font-bold">Note</span>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex-1 rounded-xl border border-zinc-200 py-3 font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleVerifyAndEnable}
+                  disabled={verificationCode.length !== 6 || loading}
+                  className="flex-[2] rounded-xl bg-zinc-900 py-3 font-bold text-white transition hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+                >
+                  {loading ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : 'Confirm'}
+                </button>
               </div>
-              <p className="text-yellow-100/70 text-xs font-mono">
-                SMS verification requires additional backend setup for production use.
-                This is a placeholder implementation.
-              </p>
             </div>
+          )}
 
-            <div className="flex justify-end gap-4">
-              <Button variant="ghost" onClick={() => setStep('select')} size="sm">
-                Back
-              </Button>
-              <Button onClick={handleSetupSMS} disabled={loading || !phoneNumber} size="sm">
-                {loading ? 'Setting up...' : 'Enable SMS MFA'}
-              </Button>
+          {step === 3 && (
+            <div className="flex flex-col items-center justify-center space-y-4 py-10 animate-in fade-in zoom-in">
+              <div className="rounded-full bg-green-500/10 p-5 border border-green-500/20">
+                <CheckCircle2 className="h-16 w-16 text-green-500" />
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Secure!</h3>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-sm">
-            <p className="text-red-400 text-xs font-mono">{error}</p>
+        {step !== 3 && (
+          <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 text-center border-t border-zinc-100 dark:border-zinc-900">
+            <button 
+              onClick={onClose}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+            >
+              Cancel
+            </button>
           </div>
         )}
       </div>
-    </Modal>
+    </div>
   )
 }
