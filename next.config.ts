@@ -3,9 +3,6 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   
-  // Best practice for Vercel and standalone deployments
-  output: 'standalone',
-
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -36,13 +33,16 @@ const nextConfig: NextConfig = {
     // Optimization: Fixes 'Big Strings' warnings by tree-shaking these heavy libraries
     optimizePackageImports: [
       'lucide-react', 
-      'recharts', 
-      'motion', 
-      '@otplib/core'
+      'motion'
     ],
   },
 
-  webpack: (config, { dev }) => {
+  webpack: (config, { dev, isServer }) => {
+    // Disable webpack cache to avoid big string serialization warnings  
+    if (!dev) {
+      config.cache = false;
+    }
+    
     // Termux/Local Dev Fix: Stops EACCES errors on Android
     if (dev) {
       config.watchOptions = {

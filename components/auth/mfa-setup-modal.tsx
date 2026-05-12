@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-// Use * as otplib to prevent "authenticator not exported" errors in Next.js 15
 import * as otplib from 'otplib'
 import QRCode from 'qrcode'
 import { 
@@ -14,7 +13,6 @@ import {
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 
-// Destructure from the namespace
 const { authenticator } = otplib
 
 interface MFASetupModalProps {

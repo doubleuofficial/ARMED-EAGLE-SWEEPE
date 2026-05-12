@@ -47,6 +47,59 @@ export default function SecurityPage() {
   const { user } = useAuth()
   const supabase = createClient()
 
+  const handleUpdatePreferences = async (updates: Partial<typeof preferences>) => {
+    const updatedPreferences = {
+      ...preferences,
+      ...updates,
+    }
+
+    setPreferences(updatedPreferences)
+
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert(
+          {
+            user_id: user.id,
+            auto_lock_vault: updatedPreferences.autoLockVault,
+            auto_lock_timeout: updatedPreferences.autoLockTimeout,
+            notifications_enabled: updatedPreferences.notificationsEnabled,
+            audit_log_retention: updatedPreferences.auditLogRetention,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: ['user_id'] }
+        )
+
+      if (error) throw error
+    } catch (err) {
+      console.error('Error updating preferences:', err)
+    }
+  }
+
+  const resolveAlert = async (alertId: string) => {
+    setSecurityAlerts((current) =>
+      current.map((alert) =>
+        alert.id === alertId ? { ...alert, resolved: true } : alert
+      )
+    )
+
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('security_alerts')
+        .update({ resolved: true })
+        .eq('id', alertId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+    } catch (err) {
+      console.error('Error resolving alert:', err)
+    }
+  }
+
   useEffect(() => {
     if (user) {
       loadSecurityData()
@@ -396,6 +449,7 @@ export default function SecurityPage() {
       <MFASetupModal
         isOpen={isMFAModalOpen}
         onClose={() => setIsMFAModalOpen(false)}
+        userEmail={user?.email || ''}
         onSuccess={() => {
           setIsMFAModalOpen(false)
           loadSecurityData()
