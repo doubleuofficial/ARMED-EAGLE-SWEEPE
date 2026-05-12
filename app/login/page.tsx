@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState } from 'react'
 import { Target, Shield, Lock, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,122 +20,69 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     try {
       const { error } = await signIn(email, password)
-
-      if (error) {
-        setError(error.message)
-      } else {
-        router.push('/')
-      }
-    } catch (err) {
-      setError('An unexpected error occurred')
+      if (error) throw error
+      router.push('/vault') // Redirect to Secure Vault [4]
+    } catch (err: any) {
+      setError(err.message || 'Could not authenticate user')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-tactical-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Ambience */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.05]"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-      />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* Login Box */}
-      <motion.div
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+      <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md z-10"
+        className="w-full max-w-md bg-[#1A1A1A] border border-[#2D2D2D] p-8 rounded-lg top-secret-border"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gold grid place-items-center rounded-sm rotate-45 mb-6 shadow-[0_0_30px_rgba(212,175,55,0.3)]">
-            <Target className="text-black -rotate-45" size={32} />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tighter text-white uppercase italic">Armed Eagle</h1>
-          <p className="text-tactical-muted font-mono text-[10px] uppercase tracking-[0.3em] mt-2">Strategic Intelligence Interface</p>
+          <Target className="w-12 h-12 text-[#D4AF37] mb-2" />
+          <h1 className="text-2xl font-bold text-[#E5E5E5] tracking-tighter">AGENT LOGIN</h1>
+          <p className="text-[#888888] text-sm">Secure Intelligence Portal</p>
         </div>
 
-        <div className="top-secret-border bg-tactical-card p-8">
-          <div className="tactical-header mb-6">
-            <Shield size={14} className="text-gold" />
-            Personnel Authentication Required
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 p-3 rounded flex items-center gap-2 text-red-500 text-sm">
+              <AlertTriangle className="w-4 h-4" /> {error}
+            </div>
+          )}
+          <div>
+            <label className="block text-xs font-mono text-[#D4AF37] uppercase mb-2">Email Address</label>
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-[#050505] border border-[#2D2D2D] p-3 rounded text-white focus:border-[#D4AF37] outline-none" 
+              required 
+            />
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="font-mono text-[10px] uppercase text-tactical-muted tracking-widest pl-1">Agent Email</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 border-b-2 border-tactical-border py-3 px-4 font-mono text-sm text-white focus:outline-none focus:border-gold transition-colors"
-                  placeholder="ENTER EMAIL..."
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="font-mono text-[10px] uppercase text-tactical-muted tracking-widest pl-1">Access Protocol</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-black/40 border-b-2 border-tactical-border py-3 px-4 pr-12 font-mono text-sm text-white focus:outline-none focus:border-gold transition-colors"
-                  placeholder="ENTER CODE..."
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-tactical-muted hover:text-gold transition-colors"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-sm">
-                <p className="text-red-400 text-xs font-mono">{error}</p>
-              </div>
-            )}
-
-            <div className="pt-4">
-              <Button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 h-12">
-                {loading ? (
-                  <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Lock size={16} />
-                    Establish Connection
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-tactical-border/50 flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-[10px] font-mono text-tactical-muted italic leading-tight">
-              <AlertTriangle className="text-yellow-500 shrink-0" size={14} />
-              <span>Unauthorized access attempts are logged and reported to Central Command.</span>
-            </div>
-            <div className="flex justify-between text-[10px] font-mono uppercase tracking-widest">
-              <Link href="/signup" className="hover:text-gold transition-colors">
-                Request Clearance
-              </Link>
-              <Link href="/reset-password" className="hover:text-gold transition-colors text-white">Forgot Code</Link>
-            </div>
+          <div className="relative">
+            <label className="block text-xs font-mono text-[#D4AF37] uppercase mb-2">Access Key</label>
+            <input 
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-[#050505] border border-[#2D2D2D] p-3 rounded text-white focus:border-[#D4AF37] outline-none" 
+              required 
+            />
+            <button 
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-9 text-[#888888]"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
-        </div>
-
-        <div className="mt-8 text-center">
-            <p className="text-[9px] font-mono text-tactical-muted uppercase tracking-[0.2em]">Secure Session // AES-256 Multi-Layer Encryption</p>
+          <Button disabled={loading} className="w-full bg-[#D4AF37] hover:bg-[#F1C40F] text-black font-bold">
+            {loading ? "INITIALIZING..." : "AUTHORIZE ACCESS"}
+          </Button>
+        </form>
+        <div className="mt-6 text-center text-sm">
+          <Link href="/signup" className="text-[#888888] hover:text-[#D4AF37]">Request New Credentials</Link>
         </div>
       </motion.div>
     </div>
