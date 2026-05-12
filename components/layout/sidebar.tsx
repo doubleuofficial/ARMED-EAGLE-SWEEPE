@@ -19,12 +19,12 @@ import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Vault', href: '/vault', icon: Lock },
-  { name: 'Rewards', href: '/rewards', icon: Gift },
-  { name: 'Directory', href: '/directory', icon: Database },
-  { name: 'Security', href: '/security', icon: Shield },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  { name: 'Vault', href: '/dashboard/vault', icon: Lock },
+  { name: 'Rewards', href: '/dashboard/rewards', icon: Gift },
+  { name: 'Directory', href: '/dashboard/directory', icon: Database },
+  { name: 'Security', href: '/dashboard/security', icon: Shield },
 ]
 
 export function Sidebar() {
