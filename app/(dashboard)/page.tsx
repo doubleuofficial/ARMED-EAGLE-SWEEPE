@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   TrendingUp,
   TrendingDown,
@@ -31,6 +31,8 @@ import {
 import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/auth-context'
+import { Tutorial } from '@/components/tutorial'
+import { createClient } from '@/lib/supabase/client'
 
 const data = [
   { name: '05/01', profit: 450 },
@@ -44,7 +46,44 @@ const data = [
 
 export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [isNewUser, setIsNewUser] = useState(false)
   const { user } = useAuth()
+  const supabase = createClient()
+
+  useEffect(() => {
+    if (user) {
+      checkUserOnboarding()
+    }
+  }, [user])
+
+  const checkUserOnboarding = async () => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('user_onboarding')
+        .select('tutorial_completed')
+        .eq('user_id', user.id)
+        .single()
+
+      if (error && error.code === 'PGRST116') {
+        // No onboarding record exists, user is new
+        setIsNewUser(true)
+        setShowTutorial(true)
+      } else if (data && !data.tutorial_completed) {
+        // Tutorial not completed
+        setShowTutorial(true)
+      }
+    } catch (err) {
+      console.error('Error checking onboarding:', err)
+    }
+  }
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false)
+    setIsNewUser(false)
+  }
 
   return (
     <div className="space-y-6 pb-12 h-full">
@@ -260,6 +299,11 @@ export default function DashboardPage() {
         </Card>
 
       </div>
+
+      {/* Tutorial for new users */}
+      {showTutorial && (
+        <Tutorial onComplete={handleTutorialComplete} />
+      )}
     </div>
   )
 }

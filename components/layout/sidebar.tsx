@@ -12,13 +12,15 @@ import {
   LogOut,
   Target,
   Settings,
-  Shield
+  Shield,
+  BarChart3
 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Vault', href: '/vault', icon: Lock },
   { name: 'Rewards', href: '/rewards', icon: Gift },
   { name: 'Directory', href: '/directory', icon: Database },

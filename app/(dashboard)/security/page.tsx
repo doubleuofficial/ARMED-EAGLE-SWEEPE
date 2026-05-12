@@ -1,12 +1,13 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Shield, Smartphone, Key, CheckCircle, XCircle, Settings } from 'lucide-react'
+import { Shield, Smartphone, Key, CheckCircle, XCircle, Settings, AlertTriangle, Clock, Eye, Lock, Bell, Database } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MFASetupModal } from '@/components/auth/mfa-setup-modal'
 import { useAuth } from '@/lib/auth-context'
 import { createClient } from '@/lib/supabase/client'
+import { motion } from 'motion/react'
 
 interface MFAStatus {
   enabled: boolean
@@ -14,42 +15,100 @@ interface MFAStatus {
   phone_number?: string
 }
 
+interface SecurityAlert {
+  id: string
+  type: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  message: string
+  created_at: string
+  resolved: boolean
+}
+
+interface AuditLog {
+  id: string
+  action: string
+  details: string
+  timestamp: string
+  ip_address?: string
+}
+
 export default function SecurityPage() {
   const [mfaStatus, setMfaStatus] = useState<MFAStatus>({ enabled: false, type: null })
   const [isMFAModalOpen, setIsMFAModalOpen] = useState(false)
+  const [securityAlerts, setSecurityAlerts] = useState<SecurityAlert[]>([])
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
+  const [preferences, setPreferences] = useState({
+    autoLockVault: true,
+    autoLockTimeout: 30,
+    notificationsEnabled: true,
+    auditLogRetention: 90
+  })
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
   const supabase = createClient()
 
   useEffect(() => {
     if (user) {
-      loadMFAStatus()
+      loadSecurityData()
     }
   }, [user])
 
-  const loadMFAStatus = async () => {
+  const loadSecurityData = async () => {
     if (!user) return
 
     try {
-      const { data, error } = await supabase
+      // Load MFA status
+      const { data: mfaData } = await supabase
         .from('user_mfa')
         .select('*')
         .eq('user_id', user.id)
         .single()
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-        throw error
+      if (mfaData) {
+        setMfaStatus({
+          enabled: mfaData.enabled,
+          type: mfaData.mfa_type,
+          phone_number: mfaData.phone_number,
+        })
       }
 
-      if (data) {
-        setMfaStatus({
-          enabled: data.enabled,
-          type: data.mfa_type,
-          phone_number: data.phone_number,
+      // Load security alerts
+      const { data: alertsData } = await supabase
+        .from('security_alerts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      setSecurityAlerts(alertsData || [])
+
+      // Load audit logs
+      const { data: logsData } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('timestamp', { ascending: false })
+        .limit(20)
+
+      setAuditLogs(logsData || [])
+
+      // Load user preferences
+      const { data: prefsData } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (prefsData) {
+        setPreferences({
+          autoLockVault: prefsData.auto_lock_vault,
+          autoLockTimeout: prefsData.auto_lock_timeout,
+          notificationsEnabled: prefsData.notifications_enabled,
+          auditLogRetention: prefsData.audit_log_retention
         })
       }
     } catch (err) {
-      console.error('Error loading MFA status:', err)
+      console.error('Error loading security data:', err)
     } finally {
       setLoading(false)
     }
