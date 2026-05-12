@@ -142,13 +142,13 @@ export default function SecurityPage() {
   return (
     <div className="space-y-8 pb-12">
       <div>
-        <h2 className="text-3xl font-black tracking-tighter text-white uppercase italic">Security Settings</h2>
+        <h2 className="text-3xl font-black tracking-tighter text-white uppercase italic">Security Command Center</h2>
         <p className="text-tactical-muted font-mono text-xs uppercase tracking-[0.2em] mt-1">
-          Configure advanced security protocols and authentication methods
+          Advanced Security Protocols // Threat Detection & Response
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* MFA Status Card */}
         <Card
           title="Multi-Factor Authentication"
@@ -209,100 +209,197 @@ export default function SecurityPage() {
                 </Button>
               )}
             </div>
-
-            <p className="text-tactical-muted text-xs font-mono leading-relaxed">
-              Multi-factor authentication adds an extra layer of security to your account.
-              We recommend enabling it for maximum protection.
-            </p>
           </div>
         </Card>
 
-        {/* Account Security Card */}
+        {/* Security Preferences */}
         <Card
-          title="Account Security"
-          icon={<Settings size={14} className="text-gold" />}
+          title="Security Preferences"
+          icon={<Settings size={14} />}
           className="min-h-[300px]"
         >
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-tactical-muted text-xs font-mono uppercase tracking-widest">
-                  Password Strength
-                </span>
-                <span className="text-green-500 text-xs font-mono font-bold">STRONG</span>
+                <div className="flex items-center gap-2">
+                  <Lock size={16} className="text-tactical-muted" />
+                  <span className="text-sm text-white">Auto-lock Vault</span>
+                </div>
+                <button
+                  onClick={() => handleUpdatePreferences({ autoLockVault: !preferences.autoLockVault })}
+                  className={`w-12 h-6 rounded-full transition-colors ${
+                    preferences.autoLockVault ? 'bg-gold' : 'bg-tactical-border'
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-black rounded-full transition-transform ${
+                    preferences.autoLockVault ? 'translate-x-6' : 'translate-x-0.5'
+                  }`} />
+                </button>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-tactical-muted text-xs font-mono uppercase tracking-widest">
-                  Last Password Change
-                </span>
-                <span className="text-white text-xs font-mono">Never</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-tactical-muted text-xs font-mono uppercase tracking-widest">
-                  Account Created
-                </span>
-                <span className="text-white text-xs font-mono">
-                  {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-tactical-muted text-xs font-mono uppercase tracking-widest">
-                  Login Attempts (24h)
-                </span>
-                <span className="text-green-500 text-xs font-mono">0</span>
-              </div>
+              {preferences.autoLockVault && (
+                <div className="ml-6">
+                  <label className="text-xs text-tactical-muted font-mono">Timeout (minutes):</label>
+                  <select
+                    value={preferences.autoLockTimeout}
+                    onChange={(e) => handleUpdatePreferences({ autoLockTimeout: parseInt(e.target.value) })}
+                    className="mt-1 w-full bg-black/40 border border-tactical-border px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-gold"
+                  >
+                    <option value={5}>5 minutes</option>
+                    <option value={15}>15 minutes</option>
+                    <option value={30}>30 minutes</option>
+                    <option value={60}>1 hour</option>
+                  </select>
+                </div>
+              )}
             </div>
 
-            <div className="border-t border-tactical-border pt-4 space-y-2">
-              <Button variant="outline" className="w-full" size="sm">
-                Change Password
-              </Button>
-              <Button variant="outline" className="w-full" size="sm">
-                View Login History
-              </Button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell size={16} className="text-tactical-muted" />
+                <span className="text-sm text-white">Security Notifications</span>
+              </div>
+              <button
+                onClick={() => handleUpdatePreferences({ notificationsEnabled: !preferences.notificationsEnabled })}
+                className={`w-12 h-6 rounded-full transition-colors ${
+                  preferences.notificationsEnabled ? 'bg-gold' : 'bg-tactical-border'
+                }`}
+              >
+                <div className={`w-5 h-5 bg-black rounded-full transition-transform ${
+                  preferences.notificationsEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                }`} />
+              </button>
             </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-tactical-muted font-mono">Audit Log Retention (days):</label>
+              <select
+                value={preferences.auditLogRetention}
+                onChange={(e) => handleUpdatePreferences({ auditLogRetention: parseInt(e.target.value) })}
+                className="w-full bg-black/40 border border-tactical-border px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-gold"
+              >
+                <option value={30}>30 days</option>
+                <option value={90}>90 days</option>
+                <option value={180}>180 days</option>
+                <option value={365}>1 year</option>
+              </select>
+            </div>
+          </div>
+        </Card>
+
+        {/* Security Alerts */}
+        <Card
+          title="Security Alerts"
+          icon={<AlertTriangle size={14} />}
+          className="min-h-[400px]"
+        >
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {securityAlerts.length === 0 ? (
+              <div className="text-center py-8">
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                <p className="text-tactical-muted text-sm">No security alerts</p>
+              </div>
+            ) : (
+              securityAlerts.map((alert) => (
+                <motion.div
+                  key={alert.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-3 border rounded-sm ${
+                    alert.resolved
+                      ? 'border-green-500/20 bg-green-500/5'
+                      : alert.severity === 'critical'
+                      ? 'border-red-500/50 bg-red-500/10'
+                      : alert.severity === 'high'
+                      ? 'border-orange-500/50 bg-orange-500/10'
+                      : 'border-yellow-500/50 bg-yellow-500/10'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <AlertTriangle size={14} className={
+                          alert.severity === 'critical' ? 'text-red-500' :
+                          alert.severity === 'high' ? 'text-orange-500' :
+                          'text-yellow-500'
+                        } />
+                        <span className="text-xs font-mono uppercase tracking-widest text-tactical-muted">
+                          {alert.type.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-white mb-1">{alert.message}</p>
+                      <p className="text-xs text-tactical-muted font-mono">
+                        {new Date(alert.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    {!alert.resolved && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => resolveAlert(alert.id)}
+                        className="text-xs"
+                      >
+                        Resolve
+                      </Button>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        {/* Audit Logs */}
+        <Card
+          title="Audit Logs"
+          icon={<Database size={14} />}
+          className="min-h-[400px]"
+        >
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {auditLogs.length === 0 ? (
+              <div className="text-center py-8">
+                <Clock className="w-12 h-12 text-tactical-muted mx-auto mb-4" />
+                <p className="text-tactical-muted text-sm">No audit logs yet</p>
+              </div>
+            ) : (
+              auditLogs.map((log) => (
+                <motion.div
+                  key={log.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 bg-black/20 border border-tactical-border/50 rounded-sm"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-mono uppercase tracking-widest text-gold">
+                      {log.action.replace('_', ' ')}
+                    </span>
+                    <span className="text-xs text-tactical-muted font-mono">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  {log.details && (
+                    <p className="text-sm text-tactical-muted mb-1">{log.details}</p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Eye size={12} className="text-tactical-muted" />
+                    <span className="text-xs text-tactical-muted font-mono">
+                      Session logged
+                    </span>
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
         </Card>
       </div>
 
-      {/* Security Audit Log */}
-      <Card title="Security Audit Log" icon={<Shield size={14} className="text-gold" />}>
-        <div className="space-y-3">
-          <div className="text-tactical-muted text-xs font-mono">
-            Recent security events and activities:
-          </div>
-
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            <div className="flex items-center justify-between py-2 border-b border-tactical-border/30">
-              <div>
-                <span className="text-white text-xs font-mono">Account created</span>
-                <span className="text-tactical-muted text-xs font-mono ml-2">
-                  {new Date().toLocaleString()}
-                </span>
-              </div>
-              <span className="text-green-500 text-xs font-mono">SUCCESS</span>
-            </div>
-
-            <div className="flex items-center justify-between py-2 border-b border-tactical-border/30">
-              <div>
-                <span className="text-white text-xs font-mono">First login</span>
-                <span className="text-tactical-muted text-xs font-mono ml-2">
-                  {new Date().toLocaleString()}
-                </span>
-              </div>
-              <span className="text-green-500 text-xs font-mono">SUCCESS</span>
-            </div>
-          </div>
-        </div>
-      </Card>
-
       <MFASetupModal
         isOpen={isMFAModalOpen}
         onClose={() => setIsMFAModalOpen(false)}
-        onSuccess={loadMFAStatus}
+        onSuccess={() => {
+          setIsMFAModalOpen(false)
+          loadSecurityData()
+        }}
       />
     </div>
   )
