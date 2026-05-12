@@ -1,12 +1,10 @@
 'use client'
-
 import React, { useState } from 'react'
-import { Target, Shield, Lock, Eye, EyeOff, AlertTriangle, UserPlus, Mail, CheckCircle } from 'lucide-react'
+import { Target, UserPlus, Mail, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { motion } from 'motion/react'
-import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -17,35 +15,19 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const { signUp } = useAuth()
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (password !== confirmPassword) return setError("Passwords do not match")
     setLoading(true)
     setError('')
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      setLoading(false)
-      return
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long')
-      setLoading(false)
-      return
-    }
-
+    
     try {
       const { error } = await signUp(email, password)
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess(true)
-      }
-    } catch (err) {
-      setError('An unexpected error occurred')
+      if (error) throw error
+      setSuccess(true) [6]
+    } catch (err: any) {
+      setError(err.message)
     } finally {
       setLoading(false)
     }
@@ -53,171 +35,40 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-tactical-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        {/* Background Ambience */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.05]"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-        />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 blur-[120px] rounded-full pointer-events-none" />
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md z-10"
-        >
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-gold grid place-items-center rounded-sm rotate-45 mb-6 shadow-[0_0_30px_rgba(212,175,55,0.3)]">
-              <Target className="text-black -rotate-45" size={32} />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tighter text-white uppercase italic">Armed Eagle</h1>
-            <p className="text-tactical-muted font-mono text-[10px] uppercase tracking-[0.3em] mt-2">Strategic Intelligence Interface</p>
-          </div>
-
-          <div className="top-secret-border bg-tactical-card p-8 text-center">
-            <div className="tactical-header mb-6">
-              <CheckCircle size={14} className="text-green-500" />
-              Agent Registration Complete
-            </div>
-
-            <div className="mb-6">
-              <p className="text-tactical-muted text-sm mb-4">
-                Your clearance request has been submitted. Check your email for the verification link to activate your account.
-              </p>
-              <p className="text-tactical-muted text-xs">
-                Once verified, you'll have access to the full ARMED EAGLE command center.
-              </p>
-            </div>
-
-            <Link href="/login">
-              <Button className="w-full flex items-center justify-center gap-2">
-                <Shield size={16} />
-                Proceed to Login
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <CheckCircle className="w-16 h-16 text-[#D4AF37] mx-auto" />
+          <h2 className="text-2xl font-bold text-white">RECRUITMENT INITIATED</h2>
+          <p className="text-[#888888]">Check your communication channel for verification.</p>
+          <Link href="/login"><Button className="bg-[#D4AF37] text-black">RETURN TO BASE</Button></Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-tactical-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Ambience */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.05]"
-        style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '40px 40px' }}
-      />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* Signup Box */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md z-10"
-      >
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+      <motion.div className="w-full max-w-md bg-[#1A1A1A] border border-[#2D2D2D] p-8 rounded-lg">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gold grid place-items-center rounded-sm rotate-45 mb-6 shadow-[0_0_30px_rgba(212,175,55,0.3)]">
-            <Target className="text-black -rotate-45" size={32} />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tighter text-white uppercase italic">Armed Eagle</h1>
-          <p className="text-tactical-muted font-mono text-[10px] uppercase tracking-[0.3em] mt-2">Strategic Intelligence Interface</p>
+          <UserPlus className="w-12 h-12 text-[#D4AF37] mb-2" />
+          <h1 className="text-2xl font-bold text-white uppercase">New Agent Registration</h1>
         </div>
-
-        <div className="top-secret-border bg-tactical-card p-8">
-          <div className="tactical-header mb-6">
-            <UserPlus size={14} className="text-gold" />
-            Request Security Clearance
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email and Password inputs similar to Login component */}
+          <div>
+            <label className="block text-xs font-mono text-[#D4AF37] uppercase mb-1">Confirm Access Key</label>
+            <input 
+              type="password" 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full bg-[#050505] border border-[#2D2D2D] p-3 rounded text-white" 
+              required 
+            />
           </div>
-
-          <p className="text-tactical-muted text-sm mb-6">
-            Join the elite ranks of tactical sweepstake operators. Your application will be reviewed and processed.
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="font-mono text-[10px] uppercase text-tactical-muted tracking-widest pl-1">Agent Email</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-black/40 border-b-2 border-tactical-border py-3 px-4 font-mono text-sm text-white focus:outline-none focus:border-gold transition-colors"
-                  placeholder="ENTER EMAIL..."
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="font-mono text-[10px] uppercase text-tactical-muted tracking-widest pl-1">Access Code</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-black/40 border-b-2 border-tactical-border py-3 px-4 pr-12 font-mono text-sm text-white focus:outline-none focus:border-gold transition-colors"
-                  placeholder="CREATE CODE..."
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-tactical-muted hover:text-gold transition-colors"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="font-mono text-[10px] uppercase text-tactical-muted tracking-widest pl-1">Confirm Access Code</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full bg-black/40 border-b-2 border-tactical-border py-3 px-4 pr-12 font-mono text-sm text-white focus:outline-none focus:border-gold transition-colors"
-                  placeholder="CONFIRM CODE..."
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-sm">
-                <p className="text-red-400 text-xs font-mono">{error}</p>
-              </div>
-            )}
-
-            <div className="pt-4">
-              <Button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 h-12">
-                {loading ? (
-                  <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <UserPlus size={16} />
-                    Submit Clearance Request
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-tactical-border/50 flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-[10px] font-mono text-tactical-muted italic leading-tight">
-              <AlertTriangle className="text-yellow-500 shrink-0" size={14} />
-              <span>All applications are subject to security review and background verification.</span>
-            </div>
-            <div className="flex justify-center text-[10px] font-mono uppercase tracking-widest">
-              <Link href="/login" className="hover:text-gold transition-colors">
-                Already have clearance?
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <p className="text-[9px] font-mono text-tactical-muted uppercase tracking-[0.2em]">Secure Session // AES-256 Multi-Layer Encryption</p>
-        </div>
+          <Button disabled={loading} className="w-full bg-[#D4AF37] text-black uppercase font-bold">
+            {loading ? "PROCESSING..." : "REGISTER AGENT"}
+          </Button>
+        </form>
       </motion.div>
     </div>
   )
