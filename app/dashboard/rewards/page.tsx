@@ -18,6 +18,33 @@ const sweepstakes = [
 
 export default function RewardsPage() {
   const [timeLeft, setTimeLeft] = useState('02:14:55')
+  const [nextDropTime, setNextDropTime] = useState<Date | null>(null)
+
+  useEffect(() => {
+    // Set next drop time to 2 hours from now for demo
+    const nextDrop = new Date()
+    nextDrop.setHours(nextDrop.getHours() + 2)
+    setNextDropTime(nextDrop)
+
+    const timer = setInterval(() => {
+      if (nextDropTime) {
+        const now = new Date()
+        const diff = nextDropTime.getTime() - now.getTime()
+
+        if (diff <= 0) {
+          setTimeLeft('00:00:00')
+          clearInterval(timer)
+        } else {
+          const hours = Math.floor(diff / (1000 * 60 * 60))
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+          setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`)
+        }
+      }
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [nextDropTime])
 
   return (
     <div className="space-y-8 pb-12">
@@ -97,6 +124,57 @@ export default function RewardsPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* Goals & Targets */}
+      <Card title="Strategic Objectives" icon={<Trophy size={14} />}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { 
+              title: 'Monthly Win Target', 
+              current: 1250, 
+              target: 2000, 
+              unit: 'SC',
+              color: 'gold'
+            },
+            { 
+              title: 'Active Entries Goal', 
+              current: 45, 
+              target: 100, 
+              unit: 'entries',
+              color: 'blue'
+            },
+            { 
+              title: 'Platform Mastery', 
+              current: 6, 
+              target: 10, 
+              unit: 'platforms',
+              color: 'green'
+            },
+          ].map((goal, i) => (
+            <div key={i} className="text-center">
+              <h4 className="text-sm font-bold text-white mb-2">{goal.title}</h4>
+              <div className="relative w-24 h-24 mx-auto mb-2">
+                <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    d="m18,2.0845 a 15.9155,15.9155 0 0,1 0,31.831 a 15.9155,15.9155 0 0,1 0,-31.831"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeDasharray={`${(goal.current / goal.target) * 100}, 100`}
+                    className={`text-${goal.color}-500`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-lg font-bold text-white">{Math.round((goal.current / goal.target) * 100)}%</span>
+                </div>
+              </div>
+              <p className="text-xs text-tactical-muted">
+                {goal.current}/{goal.target} {goal.unit}
+              </p>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Rewards Log */}
       <Card title="Historical Field Logs" icon={<Trophy size={14} />}>

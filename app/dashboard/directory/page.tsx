@@ -14,15 +14,20 @@ const initialDirectory = [
   { name: 'WOW Vegas', type: 'MW_SYSTEM', balance: '$0.00', progress: 0, status: 'Operational', risk: 'LOW' },
   { name: 'Fortune Coins', type: 'BLAZE_NET', balance: '$340.00', progress: 100, status: 'Operational', risk: 'LOW' },
   { name: 'McLuck', type: 'B2_SECURE', balance: '$5.00', progress: 5, status: 'Offline', risk: 'HIGH' },
+  { name: 'Global Sweepstakes', type: 'GLOBAL_HUB', balance: '$89.30', progress: 65, status: 'Operational', risk: 'LOW' },
+  { name: 'Prize Picks', type: 'DAILY_PICK', balance: '$156.00', progress: 30, status: 'Operational', risk: 'MED' },
+  { name: 'Sweepstakes Advantage', type: 'ADVANTAGE_CORE', balance: '$0.00', progress: 0, status: 'Maintenance', risk: 'LOW' },
 ]
 
 export default function DirectoryPage() {
   const [data] = useState(initialDirectory)
   const [searchQuery, setSearchQuery] = useState('')
+  const [riskFilter, setRiskFilter] = useState('ALL')
 
   const filteredData = data.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.type.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (riskFilter === 'ALL' || item.risk === riskFilter)
   )
 
   return (
@@ -30,7 +35,7 @@ export default function DirectoryPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black tracking-tighter text-white uppercase italic">Platform Index</h2>
-          <p className="text-tactical-muted font-mono text-xs uppercase tracking-[0.2em] mt-1">Intelligence Database // Total Nodes: {data.length}</p>
+          <p className="text-tactical-muted font-mono text-xs uppercase tracking-[0.2em] mt-1">Intelligence Database // Total Nodes: {data.length} // Filtered: {filteredData.length}</p>
         </div>
         <div className="flex items-center gap-4">
            <Button variant="outline" className="h-12 border-2 uppercase font-black tracking-widest text-[10px] italic">
@@ -40,6 +45,21 @@ export default function DirectoryPage() {
             SYNCHRONIZE GLOBAL INDEX
           </Button>
         </div>
+      </div>
+
+      {/* Platform Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {[
+          { label: 'Total Platforms', value: data.length, color: 'text-gold' },
+          { label: 'Operational', value: data.filter(p => p.status === 'Operational').length, color: 'text-green-500' },
+          { label: 'High Risk', value: data.filter(p => p.risk === 'HIGH').length, color: 'text-red-500' },
+          { label: 'Avg Progress', value: `${Math.round(data.reduce((sum, p) => sum + p.progress, 0) / data.length)}%`, color: 'text-blue-500' },
+        ].map((stat, i) => (
+          <Card key={i} className="top-secret-border bg-tactical-card p-4 text-center">
+            <div className={`text-2xl font-bold ${stat.color} mb-1`}>{stat.value}</div>
+            <div className="text-xs text-tactical-muted font-mono uppercase tracking-widest">{stat.label}</div>
+          </Card>
+        ))}
       </div>
 
       <Card className="flex flex-col h-full bg-tactical-card/50">
@@ -55,7 +75,17 @@ export default function DirectoryPage() {
             />
           </div>
           <Button variant="outline" className="h-14 border-2 px-6 flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest">
-            <Filter size={14} /> FILTER_PROTOCOL
+            <Filter size={14} /> 
+            <select 
+              value={riskFilter}
+              onChange={(e) => setRiskFilter(e.target.value)}
+              className="bg-transparent border-none outline-none text-[10px] uppercase tracking-widest"
+            >
+              <option value="ALL">ALL RISKS</option>
+              <option value="LOW">LOW RISK</option>
+              <option value="MED">MED RISK</option>
+              <option value="HIGH">HIGH RISK</option>
+            </select>
           </Button>
         </div>
 
@@ -68,6 +98,7 @@ export default function DirectoryPage() {
                 <th className="p-6 border-b border-tactical-border text-right">Extracted SC</th>
                 <th className="p-6 border-b border-tactical-border">Extraction Progress</th>
                 <th className="p-6 border-b border-tactical-border">Status</th>
+                <th className="p-6 border-b border-tactical-border">Risk Level</th>
                 <th className="p-6 border-b border-tactical-border text-right">Actions</th>
               </tr>
             </thead>
@@ -107,10 +138,21 @@ export default function DirectoryPage() {
                       "flex items-center gap-2 font-mono text-[9px] font-black uppercase px-3 py-1.5 border-2 rounded-sm w-fit tracking-widest",
                       row.status === 'Operational' ? "border-green-500/20 text-green-500 bg-green-500/5 shadow-[0_0_15px_rgba(34,197,94,0.05)]" :
                       row.status === 'Degraded' ? "border-yellow-500/20 text-yellow-500 bg-yellow-500/5 shadow-[0_0_15px_rgba(234,179,8,0.05)]" :
+                      row.status === 'Maintenance' ? "border-blue-500/20 text-blue-500 bg-blue-500/5 shadow-[0_0_15px_rgba(59,130,246,0.05)]" :
                       "border-red-500/20 text-red-500 bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.05)]"
                     )}>
                       <Activity size={10} className={cn(row.status === 'Operational' ? "animate-pulse" : "")} />
                       {row.status}
+                    </div>
+                  </td>
+                  <td className="p-6">
+                    <div className={cn(
+                      "font-mono text-[9px] font-black uppercase px-3 py-1.5 border-2 rounded-sm w-fit tracking-widest",
+                      row.risk === 'LOW' ? "border-green-500/20 text-green-500 bg-green-500/5" :
+                      row.risk === 'MED' ? "border-yellow-500/20 text-yellow-500 bg-yellow-500/5" :
+                      "border-red-500/20 text-red-500 bg-red-500/5"
+                    )}>
+                      {row.risk}
                     </div>
                   </td>
                   <td className="p-6 text-right">

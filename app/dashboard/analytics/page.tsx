@@ -297,6 +297,53 @@ export default function AnalyticsPage() {
           </div>
         </Card>
 
+        {/* Calendar View */}
+        <Card className="top-secret-border bg-tactical-card p-6" title="Deadline Calendar" icon={<Calendar size={16} />}>
+          <div className="space-y-4 mt-4">
+            <div className="grid grid-cols-7 gap-2 text-center text-xs font-mono text-tactical-muted">
+              {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
+                <div key={day} className="p-2">{day}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: 35 }, (_, i) => {
+                const day = i - 3 // Start from previous month
+                const isCurrentMonth = day >= 1 && day <= 31
+                const hasEvent = [5, 12, 18, 25].includes(day)
+                return (
+                  <div 
+                    key={i} 
+                    className={`p-3 text-center text-sm border ${
+                      isCurrentMonth 
+                        ? hasEvent 
+                          ? 'border-gold bg-gold/10 text-gold' 
+                          : 'border-tactical-border/50 text-white' 
+                        : 'border-transparent text-tactical-muted'
+                    }`}
+                  >
+                    {isCurrentMonth ? day : ''}
+                    {hasEvent && <div className="w-1 h-1 bg-gold rounded-full mx-auto mt-1" />}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-gold font-bold text-sm">Upcoming Deadlines</h4>
+              {[
+                { date: 'May 12', event: 'State Lottery Drawing', urgent: true },
+                { date: 'May 15', event: 'Mega Millions Entry Deadline', urgent: false },
+                { date: 'May 18', event: 'Powerball Results', urgent: false },
+              ].map((item, i) => (
+                <div key={i} className={`p-2 rounded text-sm ${
+                  item.urgent ? 'bg-red-500/10 border border-red-500/30' : 'bg-black/20'
+                }`}>
+                  <span className="text-gold font-mono">{item.date}:</span> {item.event}
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
         {/* Win Rate Analysis */}
         <Card className="top-secret-border bg-tactical-card p-6" title="Win Rate Analysis" icon={<Activity size={16} />}>
           <div className="space-y-4 mt-4">
@@ -324,6 +371,45 @@ export default function AnalyticsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Win/Loss Statistics */}
+      <Card className="top-secret-border bg-tactical-card p-6" title="Win/Loss Statistics" icon={<Trophy size={16} />}>
+        <div className="grid grid-cols-2 gap-6 mt-4">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-green-500 mb-2">127</div>
+            <div className="text-sm text-tactical-muted">Total Wins</div>
+            <div className="text-xs text-green-500">+12 this month</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-red-500 mb-2">89</div>
+            <div className="text-sm text-tactical-muted">Total Losses</div>
+            <div className="text-xs text-red-500">+8 this month</div>
+          </div>
+        </div>
+        <div className="mt-6">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-tactical-muted">Win Rate</span>
+            <span className="text-gold font-bold">58.8%</span>
+          </div>
+          <div className="w-full bg-black/40 rounded-full h-3">
+            <div className="bg-gold h-3 rounded-full" style={{ width: '58.8%' }} />
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div className="text-lg font-bold text-gold">$2,450</div>
+            <div className="text-xs text-tactical-muted">Avg Win</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-red-500">$125</div>
+            <div className="text-xs text-tactical-muted">Avg Loss</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-green-500">$1,890</div>
+            <div className="text-xs text-tactical-muted">Net Profit</div>
+          </div>
+        </div>
+      </Card>
 
       {/* Advanced Insights */}
       <Card className="top-secret-border bg-tactical-card p-6" title="Advanced Intelligence Report" icon={<AlertTriangle size={16} />}>

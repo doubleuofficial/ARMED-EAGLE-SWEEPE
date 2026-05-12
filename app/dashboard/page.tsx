@@ -14,7 +14,9 @@ import {
   Target,
   Database,
   Lock,
-  Gift
+  Gift,
+  Bell,
+  Settings
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -48,6 +50,7 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
   const [isNewUser, setIsNewUser] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
   const { user } = useAuth()
   const supabase = createClient()
 
@@ -136,12 +139,36 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-4">
-          <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
-            <Plus size={14} /> New Asset
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="relative"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            <Bell size={14} />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs flex items-center justify-center">3</span>
           </Button>
-          <Button size="sm">Initiate Scan</Button>
-        </div>
-      </div>
+          {showNotifications && (
+        <Card className="absolute top-20 right-6 w-80 z-50 border-red-500/30 bg-red-500/5">
+          <div className="p-4">
+            <h3 className="text-lg font-bold text-white mb-4">Mission Alerts</h3>
+            <div className="space-y-3">
+              {[
+                { title: 'Mega Millions Drawing', message: 'Results available now', urgent: true },
+                { title: 'Daily Bonus Reminder', message: 'Stake.us bonus expires in 2 hours', urgent: false },
+                { title: 'Weekly Goal Update', message: 'You\'re 75% to monthly target', urgent: false },
+              ].map((notif, i) => (
+                <div key={i} className={`p-3 rounded border ${
+                  notif.urgent ? 'border-red-500/50 bg-red-500/10' : 'border-tactical-border/50 bg-black/20'
+                }`}>
+                  <h4 className="text-sm font-bold text-white">{notif.title}</h4>
+                  <p className="text-xs text-tactical-muted">{notif.message}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+          )}
 
       {/* Bento Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-max">
@@ -227,13 +254,35 @@ export default function DashboardPage() {
           </Button>
         </Card>
 
-        {/* Account Vault (List View) */}
+        {/* Reminders & Alerts */}
         <Card 
-          className="lg:col-span-1 flex flex-col min-h-[350px]"
-          title="Account Vault"
-          icon={<Lock size={14} />}
-          headerAction={<Button variant="ghost" size="sm" onClick={() => window.location.href = '/vault'}>Expand</Button>}
+          className="lg:col-span-1"
+          title="Mission Reminders"
+          icon={<Bell size={14} />}
         >
+          <div className="space-y-3 mt-2">
+            {[
+              { message: 'Check Mega Millions results', time: '2h ago', urgent: true },
+              { message: 'Enter daily bonus on Stake.us', time: '4h ago', urgent: false },
+              { message: 'Weekly sweepstake deadline', time: '1d', urgent: true },
+              { message: 'Update vault passwords', time: '3d', urgent: false },
+            ].map((reminder, i) => (
+              <div key={i} className={`p-3 rounded border ${
+                reminder.urgent 
+                  ? 'border-red-500/30 bg-red-500/5' 
+                  : 'border-tactical-border/50 bg-black/20'
+              }`}>
+                <div className="flex items-start gap-2">
+                  <Bell size={12} className={reminder.urgent ? 'text-red-500 mt-0.5' : 'text-gold mt-0.5'} />
+                  <div className="flex-1">
+                    <p className="text-sm text-white">{reminder.message}</p>
+                    <p className="text-xs text-tactical-muted font-mono">{reminder.time}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
           <div className="space-y-3 mt-2 flex-1">
             {[
               { name: 'STAKE.US', user: 'EAGLE_EYE_01', color: 'border-gold' },
@@ -254,12 +303,41 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* Active Operations (Table View) */}
+        {/* Sweepstake Progress Tracker */}
         <Card 
-          className="lg:col-span-2"
-          title="Active Field Operations"
-          icon={<Database size={14} />}
+          className="lg:col-span-1"
+          title="Sweepstake Progress"
+          icon={<Target size={14} />}
         >
+          <div className="space-y-4 mt-2">
+            {[
+              { name: 'Mega Millions', progress: 75, deadline: '2024-05-15', status: 'Active' },
+              { name: 'Powerball', progress: 45, deadline: '2024-05-18', status: 'Active' },
+              { name: 'State Lottery', progress: 90, deadline: '2024-05-12', status: 'Urgent' },
+            ].map((item, i) => (
+              <div key={i} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold text-white">{item.name}</span>
+                  <span className={`text-xs font-mono px-2 py-1 rounded ${
+                    item.status === 'Urgent' ? 'bg-red-500/20 text-red-500' : 'bg-gold/20 text-gold'
+                  }`}>
+                    {item.status}
+                  </span>
+                </div>
+                <div className="w-full bg-black/40 rounded-full h-2">
+                  <div 
+                    className="bg-gold h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${item.progress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-tactical-muted">
+                  <span>{item.progress}% Complete</span>
+                  <span>Due: {item.deadline}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
           <div className="overflow-x-auto mt-2">
             <table className="w-full text-left">
               <thead>
